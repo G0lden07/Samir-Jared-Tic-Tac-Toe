@@ -189,3 +189,14 @@ code {
         right: unset;
     }
 }
+
+#gameTiles {
+     display: grid;
+     grid-template-columns: repeat(3, 100px);
+ }
+
+#gameTiles > fluent-button {
+    border: 2px solid black;
+    width: 100px;
+    height: 100px;
+}
