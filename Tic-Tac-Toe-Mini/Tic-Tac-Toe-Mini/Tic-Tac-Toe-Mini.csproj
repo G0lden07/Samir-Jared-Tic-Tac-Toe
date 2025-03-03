@@ -9,7 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BlazorFluentUI.CoreComponents" Version="8.0.0" />
+    <PackageReference Include="BlazorFluentUI.ListComponents" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Fast.Components.FluentUI" Version="3.8.0" />
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.11.5" />
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.11.5" />
+    <PackageReference Include="System.Text.Json" Version="9.0.2" />
   </ItemGroup>
 </Project>

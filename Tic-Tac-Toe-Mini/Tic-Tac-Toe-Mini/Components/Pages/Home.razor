@@ -1,21 +1,322 @@
 ﻿@page "/"
-
+@rendermode InteractiveServer
 <PageTitle>Home</PageTitle>
 
 <h1>Welcome!</h1>
-
 <p>Click on one of the grid cells below to start a game!</p>
 
-<br/>
+<br />
 
 <div id="gameTiles">
-    <FluentButton Appearance="Appearance.Outline"></FluentButton>
-    <FluentButton Appearance="Appearance.Outline"></FluentButton>
-    <FluentButton Appearance="Appearance.Outline"></FluentButton>
-    <FluentButton Appearance="Appearance.Outline"></FluentButton>
-    <FluentButton Appearance="Appearance.Outline"></FluentButton>
-    <FluentButton Appearance="Appearance.Outline"></FluentButton>
-    <FluentButton Appearance="Appearance.Outline"></FluentButton>
-    <FluentButton Appearance="Appearance.Outline"></FluentButton>
-    <FluentButton Appearance="Appearance.Outline"></FluentButton>
+    <!-- Each FluentButton corresponds to a cell in the 3x3 grid -->
+    <FluentButton Appearance="Appearance.Outline" @onclick="() => PlayerMove(0)">
+        @DisplayCell(board[0])
+    </FluentButton>
+    <FluentButton Appearance="Appearance.Outline" @onclick="() => PlayerMove(1)">
+        @DisplayCell(board[1])
+    </FluentButton>
+    <FluentButton Appearance="Appearance.Outline" @onclick="() => PlayerMove(2)">
+        @DisplayCell(board[2])
+    </FluentButton>
+    <FluentButton Appearance="Appearance.Outline" @onclick="() => PlayerMove(3)">
+        @DisplayCell(board[3])
+    </FluentButton>
+    <FluentButton Appearance="Appearance.Outline" @onclick="() => PlayerMove(4)">
+        @DisplayCell(board[4])
+    </FluentButton>
+    <FluentButton Appearance="Appearance.Outline" @onclick="() => PlayerMove(5)">
+        @DisplayCell(board[5])
+    </FluentButton>
+    <FluentButton Appearance="Appearance.Outline" @onclick="() => PlayerMove(6)">
+        @DisplayCell(board[6])
+    </FluentButton>
+    <FluentButton Appearance="Appearance.Outline" @onclick="() => PlayerMove(7)">
+        @DisplayCell(board[7])
+    </FluentButton>
+    <FluentButton Appearance="Appearance.Outline" @onclick="() => PlayerMove(8)">
+        @DisplayCell(board[8])
+    </FluentButton>
 </div>
+
+<p>@message</p>
+
+<!-- Button to reset the board -->
+<FluentButton Appearance="Appearance.Accent" @onclick="ResetGame">
+    Reset Game
+</FluentButton>
+
+@code {
+    // An enum for cell states: 0=Empty, 1=X, -1=O
+    enum CellState
+    {
+        Empty = 0,
+        X = 1,
+        O = -1
+    }
+
+    // The 3x3 board, stored in a single array of length 9
+    CellState[] board = new CellState[9];
+
+    // A status message for the user
+    string message = "Your turn (X)";
+
+    protected override void OnInitialized()
+    {
+        ResetBoard();
+    }
+
+    // Clears the board and resets the message
+    void ResetBoard()
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            board[i] = CellState.Empty;
+        }
+        message = "Your turn (X)";
+    }
+
+    // Displays "X", "O", or empty string for a given cell state
+    string DisplayCell(CellState state)
+    {
+        return state switch
+        {
+            CellState.X => "X",
+            CellState.O => "O",
+            _ => ""
+        };
+    }
+
+    // Returns the current player (X or O) based on how many X’s and O’s are on the board
+    // Returns null if the board is full
+    CellState? GetCurrentPlayer()
+    {
+        int countX = board.Count(x => x == CellState.X);
+        int countO = board.Count(x => x == CellState.O);
+
+        if (countX + countO == board.Length)
+            return null; // board is full
+
+        // If there are more X’s than O’s, it’s O’s turn; otherwise it’s X’s turn
+        return (countX > countO) ? CellState.O : CellState.X;
+    }
+
+    // The player (X) clicks a cell
+    async Task PlayerMove(int index)
+    {
+        // If cell is occupied or game is over, ignore
+        if (board[index] != CellState.Empty || Terminal(board) != null)
+            return;
+
+        // Make sure it’s X’s turn
+        if (GetCurrentPlayer() != CellState.X)
+            return;
+
+        // Player places an X
+        board[index] = CellState.X;
+        StateHasChanged();
+        await Task.Delay(200);
+
+        // Check if game ended
+        CheckGameStatus();
+        if (Terminal(board) != null)
+            return;
+
+        // Computer’s turn (O)
+        var bestMove = Minimax(board);
+        board[bestMove.move.index] = bestMove.move.player;
+        StateHasChanged();
+
+        // Check if game ended
+        CheckGameStatus();
+    }
+
+    // Evaluates the board for a win/loss/tie
+    // Returns 1 if X wins, -1 if O wins, 0 if tie, null if still in progress
+    int? Terminal(CellState[] b)
+    {
+        // Check rows
+        for (int i = 0; i < 3; i++)
+        {
+            var a = b[3 * i];
+            var c = b[3 * i + 1];
+            var d = b[3 * i + 2];
+            if (a != CellState.Empty && a == c && c == d)
+                return a == CellState.X ? 1 : -1;
+        }
+
+        // Check columns
+        for (int i = 0; i < 3; i++)
+        {
+            var a = b[i];
+            var c = b[i + 3];
+            var d = b[i + 6];
+            if (a != CellState.Empty && a == c && c == d)
+                return a == CellState.X ? 1 : -1;
+        }
+
+        // Check diagonals
+        if (b[0] != CellState.Empty && b[0] == b[4] && b[4] == b[8])
+            return b[0] == CellState.X ? 1 : -1;
+        if (b[2] != CellState.Empty && b[2] == b[4] && b[4] == b[6])
+            return b[2] == CellState.X ? 1 : -1;
+
+        // If no winner but board is full => tie
+        if (b.All(x => x != CellState.Empty))
+            return 0;
+
+        return null; // still in progress
+    }
+
+    // Updates the status message based on the board state
+    void CheckGameStatus()
+    {
+        var term = Terminal(board);
+        if (term.HasValue)
+        {
+            if (term.Value == 1)
+                message = "You have won!";
+            else if (term.Value == -1)
+                message = "You have lost!";
+            else
+                message = "It's a tie.";
+        }
+        else
+        {
+            // If still in progress, show whose turn it is
+            message = (GetCurrentPlayer() == CellState.X) ? "Your turn (X)" : "Computer's turn (O)";
+        }
+    }
+
+    // Resets the board and re-renders
+    void ResetGame()
+    {
+        ResetBoard();
+        StateHasChanged();
+    }
+
+    // Minimizing player = O, maximizing player = X
+    // This function returns (score, cost) recursively
+    (int score, int cost) Utility(CellState[] b, int cost)
+    {
+        var term = Terminal(b);
+        if (term.HasValue)
+            return (term.Value, cost);
+
+        var moves = Actions(b);
+        var results = new List<(int score, int cost)>();
+
+        foreach (var m in moves)
+        {
+            var newBoard = b.ToArray();
+            newBoard[m.index] = m.player;
+            results.Add(Utility(newBoard, cost + 1));
+        }
+
+        var current = GetPlayerFor(b);
+        var best = results[0];
+
+        if (current == CellState.X)
+        {
+            // X is maximizing
+            foreach (var r in results)
+            {
+                if (r.score > best.score ||
+                    (r.score == best.score && r.cost < best.cost))
+                {
+                    best = r;
+                }
+            }
+        }
+        else
+        {
+            // O is minimizing
+            foreach (var r in results)
+            {
+                if (r.score < best.score ||
+                    (r.score == best.score && r.cost < best.cost))
+                {
+                    best = r;
+                }
+            }
+        }
+        return best;
+    }
+
+    // Returns the best move for the computer (O) or for X if it’s X’s turn
+    ((CellState player, int index) move, (int score, int cost) util) Minimax(CellState[] b)
+    {
+        var moves = Actions(b);
+        if (moves.Count == 0)
+            return ((CellState.Empty, 0), (0, 0));
+
+        var results = new List<((CellState player, int index) move, (int score, int cost) util)>();
+
+        foreach (var m in moves)
+        {
+            var newBoard = b.ToArray();
+            newBoard[m.index] = m.player;
+            var u = Utility(newBoard, 1);
+            results.Add((m, u));
+        }
+
+        // Sort by index to break ties
+        results.Sort((x, y) => x.move.index.CompareTo(y.move.index));
+        var best = results[0];
+
+        var current = GetPlayerFor(b);
+        if (current == CellState.O)
+        {
+            // Minimizing
+            foreach (var c in results)
+            {
+                if (c.util.score < best.util.score ||
+                    (c.util.score == best.util.score && c.util.cost < best.util.cost))
+                {
+                    best = c;
+                }
+            }
+        }
+        else
+        {
+            // Maximizing
+            foreach (var c in results)
+            {
+                if (c.util.score > best.util.score ||
+                    (c.util.score == best.util.score && c.util.cost < best.util.cost))
+                {
+                    best = c;
+                }
+            }
+        }
+        return best;
+    }
+
+    // Returns all available moves (player, index)
+    List<(CellState player, int index)> Actions(CellState[] b)
+    {
+        var moves = new List<(CellState player, int index)>();
+        var current = GetPlayerFor(b);
+        if (!current.HasValue)
+            return moves;
+
+        for (int i = 0; i < 9; i++)
+        {
+            if (b[i] == CellState.Empty)
+            {
+                moves.Add((current.Value, i));
+            }
+        }
+        return moves;
+    }
+
+    // Determines which player should move in the given board
+    CellState? GetPlayerFor(CellState[] b)
+    {
+        int countX = b.Count(x => x == CellState.X);
+        int countO = b.Count(x => x == CellState.O);
+
+        if (countX + countO == b.Length)
+            return null;
+        return (countX > countO) ? CellState.O : CellState.X;
+    }
+}
