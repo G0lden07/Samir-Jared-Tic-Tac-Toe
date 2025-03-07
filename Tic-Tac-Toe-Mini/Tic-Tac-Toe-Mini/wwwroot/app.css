@@ -191,9 +191,10 @@ code {
 }
 
 #gameTiles {
-     display: grid;
-     grid-template-columns: repeat(3, 100px);
- }
+    display: grid;
+    gap: 5px;
+    justify-content: center;
+}
 
 #gameTiles > fluent-button {
     border: 2px solid black;
