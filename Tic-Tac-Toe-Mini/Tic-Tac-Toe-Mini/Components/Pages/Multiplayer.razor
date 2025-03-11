@@ -200,6 +200,7 @@
         return (countX > countO) ? CellState.O : CellState.X;
     }
 
+    // Marks a cell after being clicked
     async Task PlayerMove(int index)
     {
         if (board[index] != CellState.Empty || Terminal(board) != null)
