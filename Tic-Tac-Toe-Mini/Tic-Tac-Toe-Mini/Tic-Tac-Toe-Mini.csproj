@@ -16,4 +16,10 @@
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.11.5" />
     <PackageReference Include="System.Text.Json" Version="9.0.2" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Components\Pages\Multiplayer.razor">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
 </Project>
